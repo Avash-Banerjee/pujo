@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto p-6">
+  <h2 class="text-2xl font-bold text-gray-800 mb-6">Discover Profiles</h2>
+
+  <div class="space-y-4">
+    {% for user in users %}
+      <!-- Wrap card in a link -->
+      <a href="{{ url_for('view_profile', user_id=user.id) }}" 
+         class="block bg-white dark:bg-gray-900 rounded-2xl shadow hover:shadow-lg p-4 transition cursor-pointer">
+        <div class="flex items-center space-x-4">
+          <!-- Profile Picture -->
+          <img src="{{ user.photos[0] }}" alt="Profile" 
+               class="h-16 w-16 rounded-full object-cover border-2 border-pink-500">
+
+          <div>
+            <!-- Name -->
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {{ user.name }}
+            </h3>
+
+            <!-- Age -->
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              {{ user.age }} years
+            </p>
+
+            <!-- Extra field (optional) -->
+            {% if user.extra_field %}
+              <p class="text-sm text-gray-400 italic">
+                {{ user.extra_field }}
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; }
+    #chat-box { border:1px solid #ccc; height:300px; overflow-y:scroll; padding: 10px; }
+    #chat-box p { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h2>Chat with User {{ receiver_id }}</h2>
+
+  <div id="chat-box">
+    {% for msg in messages %}
+      <p>
+        <strong>
+          {{ 'You' if msg['sender_id'] == sender_id else 'Them' }}:
+        </strong>
+        {{ msg['content'] }}
+      </p>
+    {% endfor %}
+  </div>
+
+  <form method="POST">
+    <input type="text" name="message" placeholder="Type..." required>
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    const { createClient } = supabase;
+
+    const SUPABASE_URL = "{{ SUPABASE_URL }}";   // injected from Flask
+    const SUPABASE_KEY = "{{ SUPABASE_KEY }}";   // anon/public key
+    const senderId = "{{ sender_id }}";
+    const receiverId = "{{ receiver_id }}";
+
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const chatBox = document.getElementById('chat-box');
+
+    // Subscribe to new messages for THIS conversation only
+    supabaseClient
+      .channel('chat-' + senderId + '-' + receiverId)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        payload => {
+          const msg = payload.new;
+
+          // Only show messages that belong to this conversation
+          if (
+            (msg.sender_id == senderId && msg.receiver_id == receiverId) ||
+            (msg.sender_id == receiverId && msg.receiver_id == senderId)
+          ) {
+            const p = document.createElement('p');
+            const who = msg.sender_id == senderId ? "You" : "Them";
+            p.innerHTML = `<strong>${who}:</strong> ${msg.content}`;
+            chatBox.appendChild(p);
+            chatBox.scrollTop = chatBox.scrollHeight;
+          }
+        }
+      )
+      .subscribe();
+  </script>
+</body>
+</html>
